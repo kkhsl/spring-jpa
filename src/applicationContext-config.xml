@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:cache="http://www.springframework.org/schema/cache" 
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+		http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/cache 
+		http://www.springframework.org/schema/cache/spring-cache.xsd
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+    
+   
+	<!-- 把标记了@Controller等注解的类转换为bean 接口的位置，-->
+	<context:component-scan base-package="com.hkk" />
+	<mvc:annotation-driven />
+    <!-- property-placeholder是一个属性遍历器，定位一个属性文件，属性文件存放的是jdbc一些连接数据 -->
+	<context:property-placeholder location="classpath:jdbc.properties" />
+	
+    <!-- 配置数据源 com.mchange.v2.c3p0.ComboPooledDataSource -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${driverClassName}" />
+		<property name="url" value="${url}" />
+		<property name="username" value="${username}" />
+		<property name="password" value="${password}" />
+		<property name="initialSize" value="${initialSize}" />
+		<property name="maxActive" value="${maxActive}" />
+		<property name="maxIdle" value="${maxIdle}" />
+		<property name="minIdle" value="${minIdle}" />
+	</bean>
+	
+    <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+    	<!-- <property name="persistenceXmlLocation" value="classpath:persistence.xml" /> -->
+    	<!-- 注入spring数据源 -->
+    	<property name="dataSource" ref="dataSource"/>
+    	<!-- 指定jpa的实现产品配置-->
+    	<property name="jpaVendorAdapter">
+			<bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+			<!-- 相关ORM产品的基本属性配置 -->
+				<property name="database" value="MYSQL" />
+				<property name="showSql" value="false" />
+				<property name="generateDdl" value="true" />
+			</bean>
+		</property>
+		<!-- 指定要扫描的持久化类的包名 -->
+		<property name="packagesToScan">
+			<list>
+				<value>com.hkk</value>
+			</list>
+		</property>
+    </bean>
+    
+    <!-- 配置事务管理器 JPA事务 -->
+	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory" ref="entityManagerFactory" />
+		<!-- <property name="dataSource" ref="dataSource" /> -->
+	</bean>
+	 <!-- 启用支持Annotation注解方式的事务管理 -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	
+	<!-- 定义了与实体相关的dao -->
+<!-- 	<bean id="genericEntityDao" class="com.hkk.core.base.GenericEntityDao"
+		scope="singleton" lazy-init="false">
+		<property name="entityManagerFactory" ref="entityManagerFactory" />
+	</bean> -->
+	<!--使用泛型DAO作为抽象基类 abstract="true" -->
+<!-- 	<bean id="genericDAO" class="com.metoo.core.base.GenericDAO"
+		abstract="true" depends-on="genericEntityDao">
+		<property name="geDao">
+			<ref bean="genericEntityDao" />
+		</property>
+	</bean> -->
+	
+	<!-- 启动对@AspectJ（面向切面）注解的支持 --> 
+    <aop:aspectj-autoproxy />
+    
+</beans>
